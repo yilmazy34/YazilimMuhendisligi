@@ -1,141 +1,144 @@
 # YazilimMuhendisligiProjesi
+
 using System;
 using System.Collections.Generic;
 using System.Threading;
 
-class Program
+class YilanOyunu
 {
-    static int width = 40;
-    static int height = 20;
-    static int score = 0;
-    static bool gameOver = false;
+    static int alanGenislik = 40;
+    static int alanYukseklik = 20;
+    static int puan = 0;
+    static bool oyunBitti = false;
 
-    enum Direction { Up, Down, Left, Right };
-    static Direction dir = Direction.Right;
+    enum Yon { Yukari, Asagi, Sol, Sag };
+    static Yon mevcutYon = Yon.Sag;
 
-    static List<(int x, int y)> snake = new List<(int x, int y)>();
-    static (int x, int y) food;
+    static List<(int x, int y)> yilanGovde = new List<(int x, int y)>();
+    static (int x, int y) yem;
 
     static void Main()
     {
         Console.CursorVisible = false;
-        Console.SetWindowSize(width, height);
-        Console.SetBufferSize(width, height);
-        InitializeGame();
+        Console.SetWindowSize(alanGenislik, alanYukseklik);
+        Console.SetBufferSize(alanGenislik, alanYukseklik);
+        OyunuBaslat();
 
-        while (!gameOver)
+        while (!oyunBitti)
         {
-            Draw();
-            Input();
-            Logic();
+            CizimYap();
+            TusKontrol();
+            OyunMantigi();
             Thread.Sleep(100);
         }
 
         Console.Clear();
-        Console.WriteLine($"Game Over! Your score is: {score}");
+        Console.WriteLine($"Oyun Bitti! Puanınız: {puan}");
         Console.ReadKey();
     }
 
-    static void InitializeGame()
+    static void OyunuBaslat()
     {
-        snake.Clear();
-        snake.Add((width / 2, height / 2));
-        GenerateFood();
+        yilanGovde.Clear();
+        yilanGovde.Add((alanGenislik / 2, alanYukseklik / 2));
+        YeniYemUret();
     }
 
-    static void Draw()
+    static void CizimYap()
     {
         Console.Clear();
 
-        // Draw borders
-        for (int x = 0; x < width; x++)
+        // Kenarlık çiz
+        for (int x = 0; x < alanGenislik; x++)
         {
             Console.SetCursorPosition(x, 0); Console.Write("#");
-            Console.SetCursorPosition(x, height - 1); Console.Write("#");
+            Console.SetCursorPosition(x, alanYukseklik - 1); Console.Write("#");
         }
-        for (int y = 0; y < height; y++)
+        for (int y = 0; y < alanYukseklik; y++)
         {
             Console.SetCursorPosition(0, y); Console.Write("#");
-            Console.SetCursorPosition(width - 1, y); Console.Write("#");
+            Console.SetCursorPosition(alanGenislik - 1, y); Console.Write("#");
         }
 
-        // Draw snake
-        foreach (var s in snake)
+        // Yılan çiz
+        foreach (var parca in yilanGovde)
         {
-            Console.SetCursorPosition(s.x, s.y);
+            Console.SetCursorPosition(parca.x, parca.y);
             Console.Write("O");
         }
 
-        // Draw food
-        Console.SetCursorPosition(food.x, food.y);
+        // Yem çiz
+        Console.SetCursorPosition(yem.x, yem.y);
         Console.Write("@");
 
-        // Draw score
+        // Puan yazdır
         Console.SetCursorPosition(2, 0);
-        Console.Write($"Score: {score}");
+        Console.Write($"Puan: {puan}");
     }
 
-    static void Input()
+    static void TusKontrol()
     {
         if (Console.KeyAvailable)
         {
-            ConsoleKey key = Console.ReadKey(true).Key;
+            ConsoleKey tus = Console.ReadKey(true).Key;
 
-            if (key == ConsoleKey.UpArrow && dir != Direction.Down) dir = Direction.Up;
-            if (key == ConsoleKey.DownArrow && dir != Direction.Up) dir = Direction.Down;
-            if (key == ConsoleKey.LeftArrow && dir != Direction.Right) dir = Direction.Left;
-            if (key == ConsoleKey.RightArrow && dir != Direction.Left) dir = Direction.Right;
+            if (tus == ConsoleKey.UpArrow && mevcutYon != Yon.Asagi) mevcutYon = Yon.Yukari;
+            if (tus == ConsoleKey.DownArrow && mevcutYon != Yon.Yukari) mevcutYon = Yon.Asagi;
+            if (tus == ConsoleKey.LeftArrow && mevcutYon != Yon.Sag) mevcutYon = Yon.Sol;
+            if (tus == ConsoleKey.RightArrow && mevcutYon != Yon.Sol) mevcutYon = Yon.Sag;
         }
     }
 
-    static void Logic()
+    static void OyunMantigi()
     {
-        var head = snake[0];
-        (int x, int y) newHead = head;
+        var bas = yilanGovde[0];
+        (int x, int y) yeniBas = bas;
 
-        switch (dir)
+        switch (mevcutYon)
         {
-            case Direction.Up: newHead.y--; break;
-            case Direction.Down: newHead.y++; break;
-            case Direction.Left: newHead.x--; break;
-            case Direction.Right: newHead.x++; break;
+            case Yon.Yukari: yeniBas.y--; break;
+            case Yon.Asagi: yeniBas.y++; break;
+            case Yon.Sol: yeniBas.x--; break;
+            case Yon.Sag: yeniBas.x++; break;
         }
 
-        // Collision with wall
-        if (newHead.x <= 0 || newHead.x >= width - 1 || newHead.y <= 0 || newHead.y >= height - 1)
+        // Duvara çarpma
+        if (yeniBas.x <= 0 || yeniBas.x >= alanGenislik - 1 || yeniBas.y <= 0 || yeniBas.y >= alanYukseklik - 1)
         {
-            gameOver = true;
+            oyunBitti = true;
             return;
         }
 
-        // Collision with self
-        if (snake.Contains(newHead))
+        // Kendine çarpma
+        if (yilanGovde.Contains(yeniBas))
         {
-            gameOver = true;
+            oyunBitti = true;
             return;
         }
 
-        snake.Insert(0, newHead);
+        yilanGovde.Insert(0, yeniBas);
 
-        // Eat food
-        if (newHead == food)
+        // Yem yeme
+        if (yeniBas == yem)
         {
-            score += 10;
-            GenerateFood();
+            puan += 10;
+            YeniYemUret();
         }
         else
         {
-            snake.RemoveAt(snake.Count - 1); // remove tail
+            yilanGovde.RemoveAt(yilanGovde.Count - 1); // Kuyruğu kaldır
         }
     }
 
-    static void GenerateFood()
+    static void YeniYemUret()
     {
-        Random rand = new Random();
+        Random rastgele = new Random();
         do
         {
-            food.x = rand.Next(1, width - 2);
-            food.y = rand.Next(1, height - 2);
-        } while (snake.Contains(food));
+            yem.x = rastgele.Next(1, alanGenislik - 2);
+            yem.y = rastgele.Next(1, alanYukseklik - 2);
+        } while (yilanGovde.Contains(yem));
     }
 }
+
+       
