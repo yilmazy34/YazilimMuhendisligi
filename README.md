@@ -1,4 +1,4 @@
-# YazilimMuhendisligiProjes
+# YazilimMuhendisligiProje
 
 
         
